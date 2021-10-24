@@ -47,40 +47,9 @@ print_object($formdata);
 
 if($formdata) {
     // $lib = new course_unenrollment\lib();
-    $params_aaa = array('courseid' => 10);
 
     $start_date = $formdata->startdate;
     $end_date = $formdata->enddate;
-
-    $unenroll_user_sql_aaa = "
-                    SELECT ue.timeend, COUNT(ue.userid), c.fullname, c.shortname
-                    FROM mdl_course as c, mdl_user_enrolments as ue, mdl_enrol as e
-                    WHERE e.courseid = c.id AND ue.enrolid = e.id AND c.id = :courseid
-                    GROUP BY ue.timeend;
-                ";
-
-    $temp_user_aaa = $DB->get_records_sql($unenroll_user_sql_aaa, $params_aaa);
-    print_object($temp_user_aaa);
-
-    foreach($temp_user_aaa as $keyaaa => $valueaaa) {
-        echo $keyaaa . '-';
-        if (date('d/m/Y', $keyaaa) == date('d/m/Y', $end_date))
-            $count_user++;
-    }
-
-    $ab = $end_date - 8*24*60*60;
-    print_object(userdate($end_date - 8*24*60*60));
-    // print_object(userdate(strtotime("this day", $end_date)));
-    print_object(userdate('1635833640'));
-    $aaaa = strtotime(date("m/d/Y",'1635833640'));
-    print_object($aaaa);
-    print_object(userdate($aaaa));
-
-    if ($ab == $aaaa) {
-        echo 'absjagslajs';
-    }
-    
-
 
     // echo userdate(strtotime("this week monday", $start_date)) . '</br>';
     // echo userdate(strtotime("this week sunday", $start_date)) . '</br>';
@@ -103,12 +72,12 @@ if($formdata) {
     $headrows->cells[] = $cell;
 
     $courseid_arr = $formdata->courseid;
-
-    print_object($courseid_arr);
-
+    
+    // filter by daily
     if($formdata->filter == 'day') {
         $count_date = 0;
         $total_by_column = array();
+
         for($i = $start_date; $i <= $end_date; $i=$i+24*60*60) {
             $cell = new html_table_cell(date('d/m/Y', $i));
             $cell->attributes['class'] = 'cell headingcell';
@@ -123,7 +92,7 @@ if($formdata) {
             FROM mdl_course as c
             WHERE c.id = :courseid";
 
-            $params = array('courseid' => $courseid);
+            $params = array('courseid' => $courseid, 'start_date' => $start_date, 'end_date' => $end_date);
             $temp = $DB->get_records_sql($coursesql, $params);
 
             $value = $temp[$courseid];
@@ -138,26 +107,33 @@ if($formdata) {
 
             $total_by_row = 0;
             $count_date = 0;
+            $count_users_by_date = array();
             for($i = $start_date; $i <= $end_date; $i=$i+24*60*60) {
+                $count_users_by_date[$count_date] = 0;
                 $count_user = 0;
+
                 $unenroll_user_sql = "
-                    SELECT ue.*, c.fullname, c.shortname
+                    SELECT ue.timeend, COUNT(ue.userid) as count_usr, c.fullname, c.shortname
                     FROM mdl_course as c, mdl_user_enrolments as ue, mdl_enrol as e
                     WHERE e.courseid = c.id AND ue.enrolid = e.id AND c.id = :courseid
+                    AND ue.timeend >= :start_date and ue.timeend <= :end_date
+                    GROUP BY ue.timeend;
                 ";
-
                 $temp_user = $DB->get_records_sql($unenroll_user_sql, $params);
-
+                
                 foreach($temp_user as $key1 => $value) {
-                    if (date('d/m/Y', $i) == date('d/m/Y', $value->timeend))
-                        $count_user++;
+                    if (date('d/m/Y', $i) == date('d/m/Y', $key1)) {
+                        $count_users_by_date[$count_date] = $value->count_usr;
+                        break;
+                    }
                 }
-                $total_by_column[$count_date] += $count_user;
-                $count_date++;
-                $total_by_row += $count_user;
+                
+                $total_by_column[$count_date] += $count_users_by_date[$count_date];
+                $total_by_row += $count_users_by_date[$count_date];
 
-                $cell = new html_table_cell($count_user);
+                $cell = new html_table_cell($count_users_by_date[$count_date]);
                 $row->cells[] = $cell;
+                $count_date++;
 
             }
             // total by row
@@ -191,28 +167,29 @@ if($formdata) {
         $table->data[] = $row;
     } 
 
+    // filter by weekly
     else if ($formdata->filter == 'week') {
         $start_week_monday = strtotime("this week monday", $start_date);
-        $start_week_sunday = strtotime("this week sunday", $start_date);
+        // $start_week_sunday = strtotime("this week sunday", $start_date);
 
         $end_week_monday = strtotime("this week monday", $end_date);
-        $ennd_week_sunday = strtotime("this week sunday", $end_date);
+        $end_week_sunday = strtotime("this week sunday", $end_date);
 
-        $week_count = ($end_week_monday - $start_week_monday)/(7*24*60*60) + 1;
+        $count_week = ($end_week_monday - $start_week_monday)/(7*24*60*60) + 1;
 
-        $week_date = array();
-        for ($i = 0; $i < $week_count; $i++) {
-            $week_date[$i] =  date('d/m/Y', $start_week_monday) . '</br>' . ' - '. date('d/m/Y', $start_week_sunday);
+        $week_date_from_to = array();
+        for ($i = 0; $i < $count_week; $i++) {
+            $week_date_from_to[$i] =  date('d/m/Y', $start_week_monday) . ' - '. date('d/m/Y', strtotime("this week sunday", $start_week_monday));
             $start_week_monday +=  7*24*60*60;
         }
 
-        for ($i = 0; $i < $week_count; $i++) {
-            $cell = new html_table_cell($week_date[$i]);
+        $total_by_column = array();
+        for ($i = 0; $i < $count_week; $i++) {
+            $cell = new html_table_cell($week_date_from_to[$i]);
             $cell->attributes['class'] = 'cell headingcell';
             $cell->header = true;
             $headrows->cells[] = $cell;
-            // $total_by_column[$count_date] = 0;
-            // $count_date++;
+            $total_by_column[$i] = 0;
         }
 
         foreach($courseid_arr as $key => $courseid) {
@@ -220,7 +197,9 @@ if($formdata) {
             FROM mdl_course as c
             WHERE c.id = :courseid";
 
-            $params = array('courseid' => $courseid);
+            $start_week_monday = strtotime("this week monday", $start_date);
+
+            $params = array('courseid' => $courseid, 'start_date' => $start_week_monday, 'end_date' => $end_week_sunday);
             $temp = $DB->get_records_sql($coursesql, $params);
 
             $value = $temp[$courseid];
@@ -233,12 +212,167 @@ if($formdata) {
             // $cell->attributes['data-search'] = $key;
             $row->cells[] = $cell;
 
+            $total_by_row = 0;
+            $count_users_by_week = array();
+            $count_date = 0;
+
+            for ($i = 0; $i < $count_week; $i++) {
+                $count_users_by_date = 0;
+                for ($j = $start_week_monday; $j <= strtotime("this week sunday", $start_week_monday); $j = $j + 24*60*60) {
+                    $unenroll_user_sql = "
+                        SELECT ue.timeend, COUNT(ue.userid) as count_usr, c.fullname, c.shortname
+                        FROM mdl_course as c, mdl_user_enrolments as ue, mdl_enrol as e
+                        WHERE e.courseid = c.id AND ue.enrolid = e.id AND c.id = :courseid
+                        AND ue.timeend >= :start_date and ue.timeend <= :end_date
+                        GROUP BY ue.timeend;
+                    ";
+                    $temp_user = $DB->get_records_sql($unenroll_user_sql, $params);
+                    foreach($temp_user as $key1 => $value) {
+                        if (date('d/m/Y', $j) == date('d/m/Y', $key1)) {
+                            $count_users_by_date += $value->count_usr;
+                            break;
+                        }
+                    }
+                }
+                $count_users_by_week[$i] = $count_users_by_date;
+                $total_by_column[$i] += $count_users_by_week[$i];
+                $total_by_row += $count_users_by_week[$i];
+
+                $cell = new html_table_cell($count_users_by_week[$i]);
+                $row->cells[] = $cell;
+
+                $start_week_monday += 7*24*60*60; 
+            }
+            $cell = new html_table_cell($total_by_row);
+            $cell->header = true;
+            $row->cells[] = $cell;
             $table->data[] = $row;
         }
+        // total by column
+        $row = new html_table_row();
+        $cell = new html_table_cell('Total');
+        $cell->header = true;
+        $row->cells[] = $cell;
 
-        print_object($week_date);
+        $cell = new html_table_cell('');
+        $cell->header = true;
+        $row->cells[] = $cell;
 
-        echo "So tuan: " . $week_count;
+        $total_total = 0;
+
+        for ($i = 0; $i < $count_week; $i++) {
+            $cell = new html_table_cell($total_by_column[$i]);
+            $cell->header = true;
+            $row->cells[] = $cell;
+            $total_total += $total_by_column[$i];
+        }
+
+        $cell = new html_table_cell($total_total);
+        $cell->header = true;
+        $row->cells[] = $cell;
+        $table->data[] = $row;
+    }
+
+    // filter by monthly
+    else {
+        $start_month_first_day = strtotime("first day of this month", $start_date);
+        $start_month_last_day = strtotime("last day of this month", $start_date);
+        $end_month_first_day = strtotime("first day of this month", $end_date);
+        $end_month_last_day = strtotime("last day of this month", $end_date);
+        $count_month = 0;
+        for ($i = $start_month_first_day; $i <= $end_month_first_day; $i = strtotime("first day of this month +1 month", $i)) {
+            $month_date_from_to[$count_month] =  date('d/m/Y', strtotime("first day of this month", $i)) . ' - '. 
+                                    date('d/m/Y', strtotime("last day of this month", $i));
+            $count_month++;
+        }
+
+        $total_by_column = array();
+        for ($i = 0; $i < $count_month; $i++) {
+            $cell = new html_table_cell($month_date_from_to[$i]);
+            $cell->attributes['class'] = 'cell headingcell';
+            $cell->header = true;
+            $headrows->cells[] = $cell;
+            $total_by_column[$i] = 0;
+        }
+
+        foreach($courseid_arr as $key => $courseid) {
+            $coursesql = "SELECT c.id, c.fullname, c.shortname
+            FROM mdl_course as c
+            WHERE c.id = :courseid";
+
+            $start_month_first_day = strtotime("first day of this month", $start_date);
+
+            $params = array('courseid' => $courseid, 'start_date' => $start_month_first_day, 'end_date' => $end_month_last_day);
+            $temp = $DB->get_records_sql($coursesql, $params);
+
+            $value = $temp[$courseid];
+            $row = new html_table_row();
+            $cell = new html_table_cell($value->shortname);
+            // $cell->attributes['data-search'] = $key;
+            $row->cells[] = $cell;
+
+            $cell = new html_table_cell($value->fullname);
+            // $cell->attributes['data-search'] = $key;
+            $row->cells[] = $cell;
+
+            $total_by_row = 0;
+            $count_users_by_month = array();
+            for ($i = 0; $i < $count_month; $i++) {
+                $count_users_by_date = 0;
+                for ($j = $start_month_first_day; $j <= strtotime("last day of this month", $start_month_first_day); $j = $j+24*60*60) {
+                    // print_object(userdate($j));
+                    $unenroll_user_sql = "
+                        SELECT ue.timeend, COUNT(ue.userid) as count_usr, c.fullname, c.shortname
+                        FROM mdl_course as c, mdl_user_enrolments as ue, mdl_enrol as e
+                        WHERE e.courseid = c.id AND ue.enrolid = e.id AND c.id = :courseid
+                        AND ue.timeend >= :start_date and ue.timeend <= :end_date
+                        GROUP BY ue.timeend;
+                    ";
+                    $temp_user = $DB->get_records_sql($unenroll_user_sql, $params);
+                    foreach($temp_user as $key1 => $value) {
+                        if (date('d/m/Y', $j) == date('d/m/Y', $key1)) {
+                            $count_users_by_date += $value->count_usr;
+                            break;
+                        }
+                    }
+                }
+                $count_users_by_month[$i] = $count_users_by_date;
+                $total_by_column[$i] += $count_users_by_month[$i];
+                $total_by_row += $count_users_by_month[$i];
+
+                $cell = new html_table_cell($count_users_by_month[$i]);
+                $row->cells[] = $cell;
+
+                $start_month_first_day = strtotime("first day of this month +1 month", $start_month_first_day);
+            }
+            $cell = new html_table_cell($total_by_row);
+            $cell->header = true;
+            $row->cells[] = $cell;
+            $table->data[] = $row;
+        }
+        // total by column
+        $row = new html_table_row();
+        $cell = new html_table_cell('Total');
+        $cell->header = true;
+        $row->cells[] = $cell;
+
+        $cell = new html_table_cell('');
+        $cell->header = true;
+        $row->cells[] = $cell;
+
+        $total_total = 0;
+
+        for ($i = 0; $i < $count_month; $i++) {
+            $cell = new html_table_cell($total_by_column[$i]);
+            $cell->header = true;
+            $row->cells[] = $cell;
+            $total_total += $total_by_column[$i];
+        }
+
+        $cell = new html_table_cell($total_total);
+        $cell->header = true;
+        $row->cells[] = $cell;
+        $table->data[] = $row;
     }
 
     $cell = new html_table_cell('Total');
