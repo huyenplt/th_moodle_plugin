@@ -29,9 +29,9 @@ class course_unenrollment_form extends moodleform {
 
 
         $radioarray = array();
-		$radioarray[] = $mform->createElement('radio', 'filter', '', get_string('day'), 'day');
-		$radioarray[] = $mform->createElement('radio', 'filter', '', get_string('week'), 'week');
-		$radioarray[] = $mform->createElement('radio', 'filter', '', get_string('month'), 'month');
+		$radioarray[] = $mform->createElement('radio', 'filter', '', 'Daily', 'day');
+		$radioarray[] = $mform->createElement('radio', 'filter', '', 'Weekly', 'week');
+		$radioarray[] = $mform->createElement('radio', 'filter', '', 'Monthly', 'month');
         $mform->addGroup($radioarray, 'radioar', get_string('radiolabel', 'block_course_unenrollment'), array(' '), FALSE);
 		$mform->setDefault('filter', 'day');
 
