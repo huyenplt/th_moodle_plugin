@@ -37,9 +37,9 @@ class th_course_unenrollment_report_form extends moodleform {
 
         $mform->addElement('checkbox', 'wholecourse', get_string('checkboxcontent', 'block_th_course_unenrollment_report'));
 
-        $mform->addElement('submit', 'submit', get_string('submit', 'block_th_course_unenrollment_report'));
+        // $mform->addElement('submit', 'submit', get_string('submit', 'block_th_course_unenrollment_report'));
 
-		// $this->add_action_buttons(true, get_string('submmit', 'block_th_course_unenrollment_report'));
+		$this->add_action_buttons(true, get_string('submmit', 'block_th_course_unenrollment_report'));
 
     }
 }

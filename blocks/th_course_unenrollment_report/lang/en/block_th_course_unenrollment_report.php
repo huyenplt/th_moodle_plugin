@@ -6,11 +6,7 @@ $string['pluginname'] = 'Course unenrollment report';
 $string['blockstring'] = 'Block string...';
 $string['textfields'] = 'Filter';
 $string['addpage'] = 'Go to course unenrollment report...';
-$string['edithtml'] = 'Heading o dau co?';
-$string['editpage'] = 'edit page???';
-$string['simplehtmlsettings'] = 'Alo cgi z';
-$string['pagetitle'] = 'Page Title';
-$string['displayedhtml'] = 'Displayed HTML';
+
 $string['search'] = 'Course';
 $string['submit'] = 'Submit';
 $string['radiolabel'] = 'Report type';

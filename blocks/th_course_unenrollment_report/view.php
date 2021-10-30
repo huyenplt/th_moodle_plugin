@@ -29,18 +29,17 @@ $editurl = new moodle_url('/blocks/th_course_unenrollment_report/view.php');
 $settingsnode = $PAGE->settingsnav->add($title, $editurl);
 $settingsnode->make_active();
 
-echo $OUTPUT->header();
-
 $mform = new th_course_unenrollment_report_form();
-$mform->display();
 $formdata = $mform->get_data();
 
-// if ($th_course_unenrollment_report_form->is_cancelled()) {
-// 	// Cancelled forms redirect to the course main page.
-// 	$courseurl = new moodle_url('/my');
-// 	redirect($courseurl);
-// }
+if ($mform->is_cancelled()) {
+	// Cancelled forms redirect to the course main page.
+	$courseurl = new moodle_url('/my');
+	redirect($courseurl);
+}
 
+echo $OUTPUT->header();
+$mform->display();
 
 if ($formdata) {
 	$start_date = $formdata->startdate;
@@ -368,7 +367,7 @@ if ($formdata) {
 
 	// course overall cell
 	if(!empty($formdata->wholecourse)) {
-		$cell = new html_table_cell('Overall');
+		$cell = new html_table_cell('Course Overall Total');
 		$cell->attributes['class'] = 'cell headingcell';
 		$cell->header = true;
 		$headrows->cells[] = $cell;
@@ -385,6 +384,7 @@ if ($formdata) {
 
 	echo html_writer::table($table);
 }
+
 echo $OUTPUT->footer();
 
 ?>
