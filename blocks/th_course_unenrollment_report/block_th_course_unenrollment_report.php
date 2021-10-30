@@ -7,9 +7,15 @@ class block_th_course_unenrollment_report extends block_base
         $this->title = get_string('pluginname', 'block_th_course_unenrollment_report');
     }
 
+    function has_config() {
+        return true;
+    }
+
     public function get_content() {
         if ($this->content !== null)
             return $this->content;
+
+        $configs = get_config('block_th_course_unenrollment_report');
 
         $this->content         =  new stdClass;
         $this->content->text   = 'The content of our SimpleHTML block!';

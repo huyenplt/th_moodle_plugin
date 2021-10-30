@@ -39,7 +39,49 @@ class th_course_unenrollment_report_form extends moodleform {
 
         // $mform->addElement('submit', 'submit', get_string('submit', 'block_th_course_unenrollment_report'));
 
-		$this->add_action_buttons(true, get_string('submmit', 'block_th_course_unenrollment_report'));
+		$this->add_action_buttons(true, get_string('submit', 'block_th_course_unenrollment_report'));
+    }
 
+    function validation($data, $files) {
+        
+        $config = get_config('block_th_course_unenrollment_report');
+        $restrict_day = $config->restrict_date;
+        $restrict_week = $config->restrict_week;
+        $restrict_month = $config->restrict_month;
+
+        print_object($data);
+
+        if ($data['filter'] == 'day') {
+            $day_count = ($data['enddate'] - $data['startdate']) / (24*60*60) + 1;
+
+            if($day_count > $restrict_day)
+                return array('startdate'=>'chon sai, lam  on chon lai','enddate'=>'cho nay cung sai');
+        }
+
+        if ($data['filter'] == 'week') {
+            $start_week_monday = strtotime("this week monday", $data['startdate']);
+            $end_week_monday = strtotime("this week monday", $data['enddate']);
+		    $week_count = ($end_week_monday - $start_week_monday) / (7 * 24 * 60 * 60) + 1;
+    
+            if($week_count > $restrict_week)
+                return array('startdate'=>'chon sai, lam  on chon lai','enddate'=>'cho nay cung sai');
+        }
+
+        if ($data['filter'] == 'month') {
+            $start_month_first_day = strtotime("first day of this month", $data['startdate']);
+            $end_month_first_day = strtotime("first day of this month", $data['enddate']);
+
+            $month_count = 0;
+            for ($i = $start_month_first_day; $i <= $end_month_first_day; $i = strtotime("first day of this month +1 month", $i)) {
+                $month_date_from_to[$month_count] = date('d/m/Y', strtotime("first day of this month", $i)) . ' - ' .
+                date('d/m/Y', strtotime("last day of this month", $i));
+                $month_count++;
+            }
+    
+            if($month_count > $restrict_month)
+                return array('startdate' => 'chon sai, lam  on chon lai','enddate' => 'cho nay cung sai');
+        }
+
+        return array();
     }
 }

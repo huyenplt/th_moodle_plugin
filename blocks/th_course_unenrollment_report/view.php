@@ -23,7 +23,7 @@ $PAGE->set_url('/blocks/th_course_unenrollment_report/view.php');
 $PAGE->set_pagelayout('standard');
 
 $lang = current_language();
-$PAGE->requires->js_call_amd('local_thlib/main', 'init', array('.th_gradereport-grader-table', "abc", $lang));
+$PAGE->requires->js_call_amd('local_thlib/main', 'init', array('.table', "TH course unenrollment report", $lang));
 
 $editurl = new moodle_url('/blocks/th_course_unenrollment_report/view.php');
 $settingsnode = $PAGE->settingsnav->add($title, $editurl);
