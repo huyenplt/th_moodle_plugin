@@ -32,8 +32,6 @@ $mform = new th_course_unenrollment_report_form();
 $mform->display();
 $formdata = $mform->get_data();
 
-// print_object($formdata);
-
 // if ($th_course_unenrollment_report_form->is_cancelled()) {
 // 	// Cancelled forms redirect to the course main page.
 // 	$courseurl = new moodle_url('/my');
@@ -41,7 +39,6 @@ $formdata = $mform->get_data();
 // }
 
 if ($formdata) {
-	// $lib = new th_course_unenrollment_report\lib();
 	$start_date = $formdata->startdate;
 	$end_date = $formdata->enddate + 24 * 60 * 60 - 1;
 
@@ -59,6 +56,11 @@ if ($formdata) {
 	$cell->header = true;
 	$headrows->cells[] = $cell;
 
+	if(empty($formdata->courseid)) {
+		$courseid_sql = $DB->get_records_sql("SELECT c.id, c.fullname FROM {course} as c WHERE visible = 1");
+		foreach ($courseid_sql as $course) 
+			$formdata->courseid[] = $course->id;
+	}
 	$courseid_arr = $formdata->courseid;
 
 	// filter by daily
@@ -87,11 +89,9 @@ if ($formdata) {
 			$value = $temp[$courseid];
 			$row = new html_table_row();
 			$cell = new html_table_cell($value->shortname);
-			// $cell->attributes['data-search'] = $key;
 			$row->cells[] = $cell;
 
 			$cell = new html_table_cell($value->fullname);
-			// $cell->attributes['data-search'] = $key;
 			$row->cells[] = $cell;
 
 			$total_by_row = 0;
@@ -99,8 +99,8 @@ if ($formdata) {
 			$count_users_by_date = array();
 
 			$unenroll_user_sql = "
-                    SELECT ue.timeend, ue.userid as count_usr, c.fullname, c.shortname
-                    FROM {course} as c, {user}_enrolments as ue, {enrol} as e
+                    SELECT ue.id, ue.timeend, ue.userid as count_usr, c.fullname, c.shortname
+                    FROM {course} as c, {user_enrolments} as ue, {enrol} as e
                     WHERE e.courseid = c.id AND ue.enrolid = e.id AND c.id = :courseid
                     AND ue.timeend >= :start_date and ue.timeend <= :end_date;
                 ";
@@ -110,12 +110,9 @@ if ($formdata) {
 				$count_users_by_date[$count_date] = 0;
 				$count_user = 0;
 
-				// $starttime = $;
-				print_object($count_date);
-
 				foreach ($temp_user as $key1 => $value) {
-					if (date('d/m/Y', $i) == date('d/m/Y', $key1)) {
-						$count_users_by_date[$count_date] = $count_users_by_date[$count_date] + 1;
+					if (date('d/m/Y', $i) == date('d/m/Y', $value->timeend)) {
+						$count_users_by_date[$count_date] += 1;
 					}
 				}
 
@@ -157,6 +154,7 @@ if ($formdata) {
 
 		$table->data[] = $row;
 	}
+
 	// filter by weekly
 	else if ($formdata->filter == 'week') {
 		$start_week_monday = strtotime("this week monday", $start_date);
@@ -192,35 +190,31 @@ if ($formdata) {
 			$params = array('courseid' => $courseid, 'start_date' => $start_week_monday, 'end_date' => $end_week_sunday);
 			$temp = $DB->get_records_sql($coursesql, $params);
 
+			$unenroll_user_sql = "
+				SELECT ue.id, ue.timeend, ue.userid as count_usr, c.fullname, c.shortname
+				FROM {course} as c, {user}_enrolments as ue, {enrol} as e
+				WHERE e.courseid = c.id AND ue.enrolid = e.id AND c.id = :courseid
+				AND ue.timeend >= :start_date and ue.timeend <= :end_date
+			";
+			$temp_user = $DB->get_records_sql($unenroll_user_sql, $params);
+
 			$value = $temp[$courseid];
 			$row = new html_table_row();
 			$cell = new html_table_cell($value->shortname);
-			// $cell->attributes['data-search'] = $key;
 			$row->cells[] = $cell;
 
 			$cell = new html_table_cell($value->fullname);
-			// $cell->attributes['data-search'] = $key;
 			$row->cells[] = $cell;
 
 			$total_by_row = 0;
 			$count_users_by_week = array();
-			$count_date = 0;
 
 			for ($i = 0; $i < $count_week; $i++) {
 				$count_users_by_date = 0;
 				for ($j = $start_week_monday; $j <= strtotime("this week sunday", $start_week_monday); $j = $j + 24 * 60 * 60) {
-					$unenroll_user_sql = "
-                        SELECT ue.timeend, COUNT(ue.userid) as count_usr, c.fullname, c.shortname
-                        FROM {course} as c, {user}_enrolments as ue, {enrol} as e
-                        WHERE e.courseid = c.id AND ue.enrolid = e.id AND c.id = :courseid
-                        AND ue.timeend >= :start_date and ue.timeend <= :end_date
-                        GROUP BY ue.timeend;
-                    ";
-					$temp_user = $DB->get_records_sql($unenroll_user_sql, $params);
 					foreach ($temp_user as $key1 => $value) {
-						if (date('d/m/Y', $j) == date('d/m/Y', $key1)) {
-							$count_users_by_date += $value->count_usr;
-							break;
+						if (date('d/m/Y', $j) == date('d/m/Y', $value->timeend)) {
+							$count_users_by_date += 1;
 						}
 					}
 				}
@@ -294,14 +288,20 @@ if ($formdata) {
 			$params = array('courseid' => $courseid, 'start_date' => $start_month_first_day, 'end_date' => $end_month_last_day);
 			$temp = $DB->get_records_sql($coursesql, $params);
 
+			$unenroll_user_sql = "
+				SELECT ue.id, ue.timeend, ue.userid as count_usr, c.fullname, c.shortname
+				FROM {course} as c, {user}_enrolments as ue, {enrol} as e
+				WHERE e.courseid = c.id AND ue.enrolid = e.id AND c.id = :courseid
+				AND ue.timeend >= :start_date and ue.timeend <= :end_date
+			";
+			$temp_user = $DB->get_records_sql($unenroll_user_sql, $params);
+
 			$value = $temp[$courseid];
 			$row = new html_table_row();
 			$cell = new html_table_cell($value->shortname);
-			// $cell->attributes['data-search'] = $key;
 			$row->cells[] = $cell;
 
 			$cell = new html_table_cell($value->fullname);
-			// $cell->attributes['data-search'] = $key;
 			$row->cells[] = $cell;
 
 			$total_by_row = 0;
@@ -309,19 +309,9 @@ if ($formdata) {
 			for ($i = 0; $i < $count_month; $i++) {
 				$count_users_by_date = 0;
 				for ($j = $start_month_first_day; $j <= strtotime("last day of this month", $start_month_first_day); $j = $j + 24 * 60 * 60) {
-					// print_object(userdate($j));
-					$unenroll_user_sql = "
-                        SELECT ue.timeend, COUNT(ue.userid) as count_usr, c.fullname, c.shortname
-                        FROM {course} as c, {user}_enrolments as ue, {enrol} as e
-                        WHERE e.courseid = c.id AND ue.enrolid = e.id AND c.id = :courseid
-                        AND ue.timeend >= :start_date and ue.timeend <= :end_date
-                        GROUP BY ue.timeend;
-                    ";
-					$temp_user = $DB->get_records_sql($unenroll_user_sql, $params);
 					foreach ($temp_user as $key1 => $value) {
-						if (date('d/m/Y', $j) == date('d/m/Y', $key1)) {
-							$count_users_by_date += $value->count_usr;
-							break;
+						if (date('d/m/Y', $j) == date('d/m/Y', $value->timeend)) {
+							$count_users_by_date += 1;
 						}
 					}
 				}
