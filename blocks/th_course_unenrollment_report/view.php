@@ -252,8 +252,7 @@ if ($formdata) {
 		$end_month_last_day = strtotime("last day of this month", $end_date);
 		$count_month = 0;
 		for ($i = $start_month_first_day; $i <= $end_month_first_day; $i = strtotime("first day of this month +1 month", $i)) {
-			$month_date_from_to[$count_month] = date('d/m/Y', strtotime("first day of this month", $i)) . ' - ' .
-			date('d/m/Y', strtotime("last day of this month", $i));
+			$month_date_from_to[$count_month] = date('m/Y', $i);
 			$count_month++;
 		}
 
@@ -352,7 +351,12 @@ if ($formdata) {
 		$cell->header = true;
 		$row->cells[] = $cell;
 		$total_total += $total_by_column[$i];
+		$table->align[$i+2] = 'center';
 	}
+
+	for ($i = 0; $i < count($total_by_column) + 4; $i++)
+		$table->align[$i] = 'center';
+
 
 	$cell = new html_table_cell($total_total);
 	$cell->header = true;
@@ -361,14 +365,12 @@ if ($formdata) {
 
 	// add column: total, calculate total by course
 	$cell = new html_table_cell('Total');
-	$cell->attributes['class'] = 'cell headingcell';
 	$cell->header = true;
 	$headrows->cells[] = $cell;
 
 	// course overall cell
 	if(!empty($formdata->wholecourse)) {
 		$cell = new html_table_cell('Course Overall Total');
-		$cell->attributes['class'] = 'cell headingcell';
 		$cell->header = true;
 		$headrows->cells[] = $cell;
 
@@ -376,11 +378,11 @@ if ($formdata) {
 		$row->cells[] = $cell;
 	}
 
-	// $headrows = array_shift($table->data);
 	$table->head = $headrows->cells;
 	$table->attributes = array('class' => 'table', 'border' => '1');
-	$table->align[0] = 'center';
-	$table->align[1] = 'center';
+	// $table->align[0] = 'center';
+	// $table->align[1] = 'center';
+
 
 	echo html_writer::table($table);
 }

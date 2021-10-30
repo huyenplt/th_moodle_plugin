@@ -43,13 +43,10 @@ class th_course_unenrollment_report_form extends moodleform {
     }
 
     function validation($data, $files) {
-        
         $config = get_config('block_th_course_unenrollment_report');
         $restrict_day = $config->restrict_date;
         $restrict_week = $config->restrict_week;
         $restrict_month = $config->restrict_month;
-
-        print_object($data);
 
         if ($data['filter'] == 'day') {
             $day_count = ($data['enddate'] - $data['startdate']) / (24*60*60) + 1;
