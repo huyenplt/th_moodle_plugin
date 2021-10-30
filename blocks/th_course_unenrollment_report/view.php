@@ -138,6 +138,21 @@ if ($formdata) {
 			$cell->header = true;
 			$row->cells[] = $cell;
 			$table->data[] = $row;
+
+			if(!empty($formdata->wholecourse)) {
+				$now = (strtotime("now"));
+				$params1 = array('courseid' => $courseid, 'now' => $now);
+				$unenroll_user_sql1 = "
+					SELECT ue.*
+					FROM {course} as c, {user_enrolments} as ue, {enrol} as e
+					WHERE e.courseid = c.id AND ue.enrolid = e.id AND c.id = :courseid
+					AND ue.timeend <= :now AND ue.timeend != 0;
+				";
+				$temp_user1 = $DB->get_records_sql($unenroll_user_sql1, $params1);
+
+				$cell = new html_table_cell(count($temp_user1));
+				$row->cells[] = $cell;
+			}
 		}
 		// total by column
 		$row = new html_table_row();
@@ -368,31 +383,14 @@ if ($formdata) {
 	$cell->header = true;
 	$headrows->cells[] = $cell;
 
+	// course overall column
 	if(!empty($formdata->wholecourse)) {
 		$cell = new html_table_cell('Overall');
 		$cell->attributes['class'] = 'cell headingcell';
 		$cell->header = true;
 		$headrows->cells[] = $cell;
-		foreach ($courseid_arr as $key => $courseid) {
-			// $coursesql = "SELECT c.id, c.fullname, c.shortname
-            // FROM {course} as c
-            // WHERE c.id = :courseid";
-
-			// $params = array('courseid' => $courseid, 'start_date' => $start_date, 'end_date' => $end_date);
-			// $temp = $DB->get_records_sql($coursesql, $params);
-			$now = (strtotime("now"));
-			$params1 = array('courseid' => $courseid, 'now' => $now);
-			$unenroll_user_sql1 = "
-				SELECT ue.*
-				FROM {course} as c, {user_enrolments} as ue, {enrol} as e
-				WHERE e.courseid = c.id AND ue.enrolid = e.id AND c.id = 10
-				 AND ue.timeend <= :now;
-			";
-			$temp_user1 = $DB->get_records_sql($unenroll_user_sql1, $params1);
-
-			print_object(count($temp_user1));
-		}
 	}
+
 	// $headrows = array_shift($table->data);
 	$table->head = $headrows->cells;
 	$table->attributes = array('class' => 'table', 'border' => '1');
