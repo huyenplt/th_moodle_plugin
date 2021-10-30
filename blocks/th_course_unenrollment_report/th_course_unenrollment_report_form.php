@@ -35,7 +35,7 @@ class th_course_unenrollment_report_form extends moodleform {
         $mform->addGroup($radioarray, 'radioar', get_string('radiolabel', 'block_th_course_unenrollment_report'), array(' '), FALSE);
 		$mform->setDefault('filter', 'day');
 
-        $mform->addElement('checkbox', 'ratingtime', get_string('checkboxcontent', 'block_th_course_unenrollment_report'));
+        $mform->addElement('checkbox', 'wholecourse', get_string('checkboxcontent', 'block_th_course_unenrollment_report'));
 
         $mform->addElement('submit', 'submit', get_string('submit', 'block_th_course_unenrollment_report'));
 

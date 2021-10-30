@@ -32,11 +32,19 @@ $mform = new th_course_unenrollment_report_form();
 $mform->display();
 $formdata = $mform->get_data();
 
+print_object(userdate(strtotime("now")));
+print_object((strtotime("now")));
+print_object(userdate('1635581531'));
+
+
+print_object($formdata);
+
 // if ($th_course_unenrollment_report_form->is_cancelled()) {
 // 	// Cancelled forms redirect to the course main page.
 // 	$courseurl = new moodle_url('/my');
 // 	redirect($courseurl);
 // }
+
 
 if ($formdata) {
 	$start_date = $formdata->startdate;
@@ -62,6 +70,7 @@ if ($formdata) {
 			$formdata->courseid[] = $course->id;
 	}
 	$courseid_arr = $formdata->courseid;
+
 
 	// filter by daily
 	if ($formdata->filter == 'day') {
@@ -358,6 +367,32 @@ if ($formdata) {
 	$cell->attributes['class'] = 'cell headingcell';
 	$cell->header = true;
 	$headrows->cells[] = $cell;
+
+	if(!empty($formdata->wholecourse)) {
+		$cell = new html_table_cell('Overall');
+		$cell->attributes['class'] = 'cell headingcell';
+		$cell->header = true;
+		$headrows->cells[] = $cell;
+		foreach ($courseid_arr as $key => $courseid) {
+			// $coursesql = "SELECT c.id, c.fullname, c.shortname
+            // FROM {course} as c
+            // WHERE c.id = :courseid";
+
+			// $params = array('courseid' => $courseid, 'start_date' => $start_date, 'end_date' => $end_date);
+			// $temp = $DB->get_records_sql($coursesql, $params);
+			$now = (strtotime("now"));
+			$params1 = array('courseid' => $courseid, 'now' => $now);
+			$unenroll_user_sql1 = "
+				SELECT ue.*
+				FROM {course} as c, {user_enrolments} as ue, {enrol} as e
+				WHERE e.courseid = c.id AND ue.enrolid = e.id AND c.id = 10
+				 AND ue.timeend <= :now;
+			";
+			$temp_user1 = $DB->get_records_sql($unenroll_user_sql1, $params1);
+
+			print_object(count($temp_user1));
+		}
+	}
 	// $headrows = array_shift($table->data);
 	$table->head = $headrows->cells;
 	$table->attributes = array('class' => 'table', 'border' => '1');
