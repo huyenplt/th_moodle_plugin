@@ -29,6 +29,11 @@ $string['retrictweek'] = 'Restrict Week ';
 $string['retrictweekdesc'] = 'Restrict Week Desc';
 $string['retrictmonth'] = 'Restrict Month';
 $string['retrictmonthdesc'] = 'Restrict Month Desc';
+$string['date_restrict_err'] = 'Search time restriction: 30 days. Please choose again!';
+$string['week_restrict_err'] = 'Search time restriction: 8 weeks. Please choose again!';
+$string['month_restrict_err'] = 'Search time restriction: 6 months. Please choose again!';
+$string['date_err'] = 'Invalid time. Please choose again!';
+
 
 
 

@@ -48,11 +48,15 @@ class th_course_unenrollment_report_form extends moodleform {
         $restrict_week = $config->restrict_week;
         $restrict_month = $config->restrict_month;
 
+        if ($data['enddate'] < $data['startdate']) {
+            return array('enddate' => get_string('date_err', 'block_th_course_unenrollment_report'));
+        }
+
         if ($data['filter'] == 'day') {
             $day_count = ($data['enddate'] - $data['startdate']) / (24*60*60) + 1;
 
             if($day_count > $restrict_day)
-                return array('startdate'=>'chon sai, lam  on chon lai','enddate'=>'cho nay cung sai');
+                return array('enddate' => get_string('date_restrict_err', 'block_th_course_unenrollment_report'));
         }
 
         if ($data['filter'] == 'week') {
@@ -61,7 +65,7 @@ class th_course_unenrollment_report_form extends moodleform {
 		    $week_count = ($end_week_monday - $start_week_monday) / (7 * 24 * 60 * 60) + 1;
     
             if($week_count > $restrict_week)
-                return array('startdate'=>'chon sai, lam  on chon lai','enddate'=>'cho nay cung sai');
+                return array('enddate' => get_string('week_restrict_err', 'block_th_course_unenrollment_report'));
         }
 
         if ($data['filter'] == 'month') {
@@ -76,7 +80,7 @@ class th_course_unenrollment_report_form extends moodleform {
             }
     
             if($month_count > $restrict_month)
-                return array('startdate' => 'chon sai, lam  on chon lai','enddate' => 'cho nay cung sai');
+                return array('enddate' => get_string('month_restrict_err', 'block_th_course_unenrollment_report'));
         }
 
         return array();

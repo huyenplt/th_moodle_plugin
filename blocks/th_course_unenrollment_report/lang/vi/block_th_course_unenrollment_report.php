@@ -20,6 +20,12 @@ $string['monthly'] = 'Tháng';
 $string['fromdate'] = 'Từ ngày';
 $string['todate'] = 'Đến ngày';
 
+$string['date_restrict_err'] = 'Giới hạn thời gian tìm kiếm: 30 ngày. Vui lòng chọn lại!';
+$string['week_restrict_err'] = 'Giới hạn thời gian tìm kiếm: 8 tuần. Vui lòng chọn lại!';
+$string['month_restrict_err'] = 'Giới hạn thời gian tìm kiếm: 6 tháng. Vui lòng chọn lại!';
+$string['date_err'] = 'Thời gian không hợp lệ. Vui lòng chọn lại!';
+
+
 
 
 
