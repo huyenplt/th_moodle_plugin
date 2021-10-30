@@ -22,6 +22,9 @@ $PAGE->set_title($title);
 $PAGE->set_url('/blocks/th_course_unenrollment_report/view.php');
 $PAGE->set_pagelayout('standard');
 
+$lang = current_language();
+$PAGE->requires->js_call_amd('local_thlib/main', 'init', array('.th_gradereport-grader-table', "abc", $lang));
+
 $editurl = new moodle_url('/blocks/th_course_unenrollment_report/view.php');
 $settingsnode = $PAGE->settingsnav->add($title, $editurl);
 $settingsnode->make_active();
@@ -31,13 +34,6 @@ echo $OUTPUT->header();
 $mform = new th_course_unenrollment_report_form();
 $mform->display();
 $formdata = $mform->get_data();
-
-print_object(userdate(strtotime("now")));
-print_object((strtotime("now")));
-print_object(userdate('1635581531'));
-
-
-print_object($formdata);
 
 // if ($th_course_unenrollment_report_form->is_cancelled()) {
 // 	// Cancelled forms redirect to the course main page.
@@ -49,9 +45,10 @@ print_object($formdata);
 if ($formdata) {
 	$start_date = $formdata->startdate;
 	$end_date = $formdata->enddate + 24 * 60 * 60 - 1;
+	$total_course_overall = 0;
+	$now = (strtotime("now"));
 
 	$table = new html_table();
-
 	$headrows = new html_table_row();
 
 	$cell = new html_table_cell(get_string('course_short', 'block_th_course_unenrollment_report'));
@@ -71,10 +68,8 @@ if ($formdata) {
 	}
 	$courseid_arr = $formdata->courseid;
 
-
 	// filter by daily
 	if ($formdata->filter == 'day') {
-
 		$count_date = 0;
 		$total_by_column = array();
 
@@ -92,7 +87,7 @@ if ($formdata) {
             FROM {course} as c
             WHERE c.id = :courseid";
 
-			$params = array('courseid' => $courseid, 'start_date' => $start_date, 'end_date' => $end_date);
+			$params = array('courseid' => $courseid, 'start_date' => $start_date, 'end_date' => $end_date, 'now' => $now);
 			$temp = $DB->get_records_sql($coursesql, $params);
 
 			$value = $temp[$courseid];
@@ -137,53 +132,29 @@ if ($formdata) {
 			$cell = new html_table_cell($total_by_row);
 			$cell->header = true;
 			$row->cells[] = $cell;
-			$table->data[] = $row;
-
+			
+			// course overall
 			if(!empty($formdata->wholecourse)) {
-				$now = (strtotime("now"));
-				$params1 = array('courseid' => $courseid, 'now' => $now);
-				$unenroll_user_sql1 = "
+				$unenroll_course_overall = "
 					SELECT ue.*
 					FROM {course} as c, {user_enrolments} as ue, {enrol} as e
 					WHERE e.courseid = c.id AND ue.enrolid = e.id AND c.id = :courseid
 					AND ue.timeend <= :now AND ue.timeend != 0;
 				";
-				$temp_user1 = $DB->get_records_sql($unenroll_user_sql1, $params1);
+				$temp_user1 = $DB->get_records_sql($unenroll_course_overall, $params);
 
 				$cell = new html_table_cell(count($temp_user1));
 				$row->cells[] = $cell;
+
+				$total_course_overall += count($temp_user1);
 			}
+			$table->data[] = $row;
 		}
-		// total by column
-		$row = new html_table_row();
-		$cell = new html_table_cell('Total');
-		$cell->header = true;
-		$row->cells[] = $cell;
-
-		$cell = new html_table_cell('');
-		$cell->header = true;
-		$row->cells[] = $cell;
-
-		$total_total = 0;
-		for ($i = 0; $i < count($total_by_column); $i++) {
-			$cell = new html_table_cell($total_by_column[$i]);
-			$cell->header = true;
-			$row->cells[] = $cell;
-			$total_total += $total_by_column[$i];
-		}
-
-		$cell = new html_table_cell($total_total);
-		$cell->header = true;
-		$row->cells[] = $cell;
-
-		$table->data[] = $row;
 	}
 
 	// filter by weekly
 	else if ($formdata->filter == 'week') {
 		$start_week_monday = strtotime("this week monday", $start_date);
-		// $start_week_sunday = strtotime("this week sunday", $start_date);
-
 		$end_week_monday = strtotime("this week monday", $end_date);
 		$end_week_sunday = strtotime("this week sunday", $end_date);
 
@@ -211,7 +182,7 @@ if ($formdata) {
 
 			$start_week_monday = strtotime("this week monday", $start_date);
 
-			$params = array('courseid' => $courseid, 'start_date' => $start_week_monday, 'end_date' => $end_week_sunday);
+			$params = array('courseid' => $courseid, 'start_date' => $start_week_monday, 'end_date' => $end_week_sunday, 'now' => $now);
 			$temp = $DB->get_records_sql($coursesql, $params);
 
 			$unenroll_user_sql = "
@@ -254,32 +225,26 @@ if ($formdata) {
 			$cell = new html_table_cell($total_by_row);
 			$cell->header = true;
 			$row->cells[] = $cell;
+
+			// course overall
+			if(!empty($formdata->wholecourse)) {
+				$unenroll_course_overall = "
+					SELECT ue.*
+					FROM {course} as c, {user_enrolments} as ue, {enrol} as e
+					WHERE e.courseid = c.id AND ue.enrolid = e.id AND c.id = :courseid
+					AND ue.timeend <= :now AND ue.timeend != 0;
+				";
+				$temp_user1 = $DB->get_records_sql($unenroll_course_overall, $params);
+
+				$cell = new html_table_cell(count($temp_user1));
+				$row->cells[] = $cell;
+
+				$total_course_overall += count($temp_user1);
+			}
 			$table->data[] = $row;
 		}
-		// total by column
-		$row = new html_table_row();
-		$cell = new html_table_cell('Total');
-		$cell->header = true;
-		$row->cells[] = $cell;
-
-		$cell = new html_table_cell('');
-		$cell->header = true;
-		$row->cells[] = $cell;
-
-		$total_total = 0;
-
-		for ($i = 0; $i < $count_week; $i++) {
-			$cell = new html_table_cell($total_by_column[$i]);
-			$cell->header = true;
-			$row->cells[] = $cell;
-			$total_total += $total_by_column[$i];
-		}
-
-		$cell = new html_table_cell($total_total);
-		$cell->header = true;
-		$row->cells[] = $cell;
-		$table->data[] = $row;
 	}
+
 	// filter by monthly
 	else {
 		$start_month_first_day = strtotime("first day of this month", $start_date);
@@ -309,7 +274,7 @@ if ($formdata) {
 
 			$start_month_first_day = strtotime("first day of this month", $start_date);
 
-			$params = array('courseid' => $courseid, 'start_date' => $start_month_first_day, 'end_date' => $end_month_last_day);
+			$params = array('courseid' => $courseid, 'start_date' => $start_month_first_day, 'end_date' => $end_month_last_day, 'now' => $now);
 			$temp = $DB->get_records_sql($coursesql, $params);
 
 			$unenroll_user_sql = "
@@ -351,44 +316,65 @@ if ($formdata) {
 			$cell = new html_table_cell($total_by_row);
 			$cell->header = true;
 			$row->cells[] = $cell;
+
+			// course overall
+			if(!empty($formdata->wholecourse)) {
+				$unenroll_course_overall = "
+					SELECT ue.*
+					FROM {course} as c, {user_enrolments} as ue, {enrol} as e
+					WHERE e.courseid = c.id AND ue.enrolid = e.id AND c.id = :courseid
+					AND ue.timeend <= :now AND ue.timeend != 0;
+				";
+				$temp_user1 = $DB->get_records_sql($unenroll_course_overall, $params);
+
+				$cell = new html_table_cell(count($temp_user1));
+				$row->cells[] = $cell;
+
+				$total_course_overall += count($temp_user1);
+			}
 			$table->data[] = $row;
 		}
-		// total by column
-		$row = new html_table_row();
-		$cell = new html_table_cell('Total');
-		$cell->header = true;
-		$row->cells[] = $cell;
-
-		$cell = new html_table_cell('');
-		$cell->header = true;
-		$row->cells[] = $cell;
-
-		$total_total = 0;
-
-		for ($i = 0; $i < $count_month; $i++) {
-			$cell = new html_table_cell($total_by_column[$i]);
-			$cell->header = true;
-			$row->cells[] = $cell;
-			$total_total += $total_by_column[$i];
-		}
-
-		$cell = new html_table_cell($total_total);
-		$cell->header = true;
-		$row->cells[] = $cell;
-		$table->data[] = $row;
 	}
 
+	
+	// add row: total, calculate total by column date/week/month
+	$row = new html_table_row();
+	$cell = new html_table_cell('Total');
+	$cell->header = true;
+	$row->cells[] = $cell;
+
+	$cell = new html_table_cell('');
+	$cell->header = true;
+	$row->cells[] = $cell;
+
+	$total_total = 0;
+	for ($i = 0; $i < count($total_by_column); $i++) {
+		$cell = new html_table_cell($total_by_column[$i]);
+		$cell->header = true;
+		$row->cells[] = $cell;
+		$total_total += $total_by_column[$i];
+	}
+
+	$cell = new html_table_cell($total_total);
+	$cell->header = true;
+	$row->cells[] = $cell;
+	$table->data[] = $row;
+
+	// add column: total, calculate total by course
 	$cell = new html_table_cell('Total');
 	$cell->attributes['class'] = 'cell headingcell';
 	$cell->header = true;
 	$headrows->cells[] = $cell;
 
-	// course overall column
+	// course overall cell
 	if(!empty($formdata->wholecourse)) {
 		$cell = new html_table_cell('Overall');
 		$cell->attributes['class'] = 'cell headingcell';
 		$cell->header = true;
 		$headrows->cells[] = $cell;
+
+		$cell = new html_table_cell($total_course_overall);
+		$row->cells[] = $cell;
 	}
 
 	// $headrows = array_shift($table->data);
