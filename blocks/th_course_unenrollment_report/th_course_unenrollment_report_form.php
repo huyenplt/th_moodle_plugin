@@ -10,8 +10,8 @@ class th_course_unenrollment_report_form extends moodleform {
         $mform = $this->_form;
         $mform->addElement('header','displayinfo', get_string('textfields', 'block_th_course_unenrollment_report'));
         
-        $mform->addElement('date_selector', 'startdate', get_string('from'));
-		$mform->addElement('date_selector', 'enddate', get_string('to'));
+        $mform->addElement('date_selector', 'startdate', get_string('fromdate', 'block_th_course_unenrollment_report'));
+		$mform->addElement('date_selector', 'enddate', get_string('todate', 'block_th_course_unenrollment_report'));
 
         $courseArr = array();
         $courses = $DB->get_records('course');
@@ -21,17 +21,17 @@ class th_course_unenrollment_report_form extends moodleform {
             $courseArr[$course->id - 1] = $course->fullname;
         }
 
-        $options = array(
-			'multiple' => true,
-		);
+        // $options = array(
+		// 	'multiple' => true,
+		// );
 		//$mform->addElement('autocomplete', 'areaids', get_string('search', 'block_th_course_unenrollment_report'), $courseArr, $options);
 		$this->course_arr = \th_course_unenrollment_report\lib::get_allcourseid_form($mform);
 
 
         $radioarray = array();
-		$radioarray[] = $mform->createElement('radio', 'filter', '', 'Daily', 'day');
-		$radioarray[] = $mform->createElement('radio', 'filter', '', 'Weekly', 'week');
-		$radioarray[] = $mform->createElement('radio', 'filter', '', 'Monthly', 'month');
+		$radioarray[] = $mform->createElement('radio', 'filter', '', get_string('daily', 'block_th_course_unenrollment_report'), 'day');
+		$radioarray[] = $mform->createElement('radio', 'filter', '', get_string('weekly', 'block_th_course_unenrollment_report'), 'week');
+		$radioarray[] = $mform->createElement('radio', 'filter', '', get_string('monthly', 'block_th_course_unenrollment_report'), 'month');
         $mform->addGroup($radioarray, 'radioar', get_string('radiolabel', 'block_th_course_unenrollment_report'), array(' '), FALSE);
 		$mform->setDefault('filter', 'day');
 

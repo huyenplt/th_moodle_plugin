@@ -58,7 +58,7 @@ class lib {
 
 		$options = array(
 			'multiple' => true,
-			// 'noselectionstring' => get_string('choose_a_course', 'block_th_course_unenrollment_report'),
+			'noselectionstring' => get_string('noselection', 'block_th_course_unenrollment_report'),
 		);
 		$mform->addElement('autocomplete', 'courseid', get_string('search', 'block_th_course_unenrollment_report'), $choice, $options);
 		return $courses;

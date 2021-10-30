@@ -15,10 +15,8 @@ class block_th_course_unenrollment_report extends block_base
         if ($this->content !== null)
             return $this->content;
 
-        $configs = get_config('block_th_course_unenrollment_report');
-
         $this->content         =  new stdClass;
-        $this->content->text   = 'The content of our SimpleHTML block!';
+        $this->content->text   = get_string('contenttext', 'block_th_course_unenrollment_report');
 
         // The other code.
         global $COURSE;
